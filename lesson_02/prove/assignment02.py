@@ -30,8 +30,15 @@ def main():
     log.start_timer()
 
     bank = Bank()
+    threads = []
 
-    # TODO - Add a ATM_Reader for each data file
+    for filename in data_files:
+        atm_thread = ATM_Reader(filename, bank)
+        atm_thread.start()
+        threads.append(atm_thread)
+
+    for t in threads:
+        t.join()
 
     test_balances(bank)
 
@@ -39,21 +46,62 @@ def main():
 
 
 # ===========================================================================
-class ATM_Reader():
-    # TODO - implement this class here
-    ...
+class ATM_Reader(threading.Thread):
+    def __init__(self, filename, bank):
+        threading.Thread.__init__(self)
+        self.filename = filename
+        self.bank = bank
+
+    def run(self):
+        with open(self.filename, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith('#') or not line:
+                    continue
+
+                parts = line.split(',')
+                account_number = int(parts[0])
+                trans_type = parts[1]
+                amount = Money(parts[2])
+
+                if trans_type == 'd':
+                    self.bank.deposit(account_number, amount)
+                elif trans_type == 'w':
+                    self.bank.withdraw(account_number, amount)
 
 
 # ===========================================================================
 class Account():
-    # TODO - implement this class here
-    ...
+    def __init__(self, account_number):
+        self.account_number = account_number
+        self.balance = Money('0.00')
+        self.lock = threading.Lock()
+
+    def deposit(self, amount):
+        with self.lock:
+            self.balance.add(amount)
+
+    def withdraw(self, amount):
+        with self.lock:
+            self.balance.sub(amount)
+
+    def get_balance(self):
+        return self.balance
 
 
 # ===========================================================================
 class Bank():
-    # TODO - implement this class here
-    ...
+    def __init__(self):
+        self.accounts = {i: Account(i) for i in range(1, 21)}
+
+    def deposit(self, account_number, amount):
+        self.accounts[account_number].deposit(amount)
+
+    def withdraw(self, account_number, amount):
+        self.accounts[account_number].withdraw(amount)
+
+    def get_balance(self, account_number):
+        return self.accounts[account_number].get_balance()
 
 
 # ---------------------------------------------------------------------------
