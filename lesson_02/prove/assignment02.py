@@ -1,10 +1,11 @@
 """
 Course    : CSE 351
 Assignment: 02
-Student   : <your name here>
+Student   : Austin Linford
 
-Instructions:
-    - review instructions in the course
+Category  : Meets requirements
+Justification: The program correctly processes all ATM files using threads, updates account balances accurately, 
+and passes all provided tests for the assignment.
 """
 
 # Don't import any other packages for this assignment
