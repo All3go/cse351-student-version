@@ -1,7 +1,7 @@
 """
 Course    : CSE 351
 Assignment: 04
-Student   : <your name here>
+Student   : Austin Linford
 
 Instructions:
     - review instructions in the course
@@ -19,33 +19,68 @@ recno: record number starting from 0
 
 import time
 from common import *
-
+import threading
+import queue
 from cse351 import *
 
-THREADS = 0                 # TODO - set for your program
+THREADS = 10                 # TODO - set for your program
 WORKERS = 10
 RECORDS_TO_RETRIEVE = 5000  # Don't change
 
 
 # ---------------------------------------------------------------------------
-def retrieve_weather_data():
-    # TODO - fill out this thread function (and arguments)
-    ...
+def retrieve_weather_data(command_queue, worker_queue):
+    while True:
+        command = command_queue.get()
+        if command is None:
+            command_queue.task_done()
+            command_queue.put(None)
+            break
+
+        city, record_no = command
+        url = f'{TOP_API_URL}/record/{city}/{record_no}'
+        data = get_data_from_server(url)
+        worker_queue.put((city, data['date'], data['temp']))
+        command_queue.task_done()
 
 
 # ---------------------------------------------------------------------------
-# TODO - Create Worker threaded class
+class Worker(threading.Thread):
 
+    def __init__(self, worker_queue, noaa):
+        super().__init__(daemon=True)
+        self.worker_queue = worker_queue
+        self.noaa = noaa
+    
+    def run(self):
+        while True:
+            item = self.worker_queue.get()
+            if item is None:
+                self.worker_queue.task_done()
+                break
+
+            city, date, temp = item
+            self.noaa.add_record(city, date, temp)
+            self.worker_queue.task_done()
 
 # ---------------------------------------------------------------------------
 # TODO - Complete this class
 class NOAA:
 
     def __init__(self):
-        ...
+        self.lock = threading.Lock()
+        self.data = {city: [] for city in CITIES}
+
+    def add_record(self, city, date, temp):
+        with self.lock:
+            self.data[city].append((date, temp))
 
     def get_temp_details(self, city):
-        return 0.0
+        with self.lock:
+            temps = [t for (_d, t) in self.data[city]]
+            if not temps:
+                return 0.0
+        return sum(temps) / len(temps)
 
 
 # ---------------------------------------------------------------------------
@@ -104,8 +139,29 @@ def main():
     records = RECORDS_TO_RETRIEVE
 
     # TODO - Create any queues, pipes, locks, barriers you need
+    command_queue = queue.Queue(maxsize=10)
+    worker_queue = queue.Queue(maxsize=10)
 
-
+    workers = []
+    for _ in range(WORKERS):
+        w = Worker(worker_queue, noaa)
+        w.start()
+        workers.append(w)
+    
+    retrivers = []
+    for _ in range(THREADS):
+        t = threading.Thread(target=retrieve_weather_data, args=(command_queue, worker_queue))
+        t.start()
+        retrivers.append(t)
+    
+    for city in CITIES:
+        for record_no in range(RECORDS_TO_RETRIEVE):
+            command_queue.put((city, record_no))
+    
+    command_queue.put(None)
+    command_queue.join()
+    worker_queue.put(None)
+    worker_queue.join()
 
 
     # End server - don't change below
