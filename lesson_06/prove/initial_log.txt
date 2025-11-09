@@ -1,0 +1,21 @@
+19:44:34| Processing Images
+Starting image processing pipeline...
+Created folder: step1_smoothed
+
+Processing images from 'faces' to 'step1_smoothed'...
+Finished processing. 13233 images processed into 'step1_smoothed'.
+Created folder: step2_grayscale
+
+Processing images from 'step1_smoothed' to 'step2_grayscale'...
+Finished processing. 13233 images processed into 'step2_grayscale'.
+
+Processing images from 'step2_grayscale' to 'step3_edges'...
+Finished processing. 13233 images processed into 'step3_edges'.
+
+Image processing pipeline finished!
+Original images are in: 'faces'
+Grayscale images are in: 'step1_smoothed'
+Smoothed images are in: 'step2_grayscale'
+Edge images are in: 'step3_edges'
+19:44:49| 
+19:44:49| Total Time To complete = 14.93878400
