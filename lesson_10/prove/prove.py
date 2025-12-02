@@ -2,11 +2,11 @@
 Course: CSE 351
 Lesson Week: 10
 File: assignment.py
-Author: <your name>
+Author: Austin Linford
 Purpose: Assignment 10 - Family Search
 """
 from common import *
-from functions import depth_fs_pedigree, breadth_fs_pedigree, breadth_fs_pedigree_limit5
+from functions import depth_fs_pedigree, breadth_fs_pedigree
 
 from cse351 import *
 
@@ -65,7 +65,7 @@ def main():
             elif part_to_run == 2:
                 run_part(log, start_id, generations, BFS, breadth_fs_pedigree)
             elif part_to_run == 3:
-                run_part(log, start_id, generations, BFS5, breadth_fs_pedigree_limit5)
+                run_part(log, start_id, generations, BFS5, breadth_fs_pedigree)
 
 
 if __name__ == '__main__':
