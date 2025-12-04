@@ -34,7 +34,6 @@ def retrieve_weather_data(command_queue, worker_queue):
         command = command_queue.get()
         if command is None:
             command_queue.task_done()
-            command_queue.put(None)
             break
 
         city, record_no = command
@@ -64,7 +63,7 @@ class Worker(threading.Thread):
             self.worker_queue.task_done()
 
 # ---------------------------------------------------------------------------
-# TODO - Complete this class
+# TODO - Complete this
 class NOAA:
 
     def __init__(self):
@@ -158,10 +157,17 @@ def main():
         for record_no in range(RECORDS_TO_RETRIEVE):
             command_queue.put((city, record_no))
     
-    command_queue.put(None)
-    command_queue.join()
-    worker_queue.put(None)
-    worker_queue.join()
+    for _ in range(THREADS):
+        command_queue.put(None)
+
+    for t in retrivers:
+        t.join()
+    
+    for _ in range(WORKERS):
+        worker_queue.put(None)
+
+    for w in workers:
+        w.join()
 
 
     # End server - don't change below
