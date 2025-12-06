@@ -2,7 +2,7 @@
 Course: CSE 351 
 Assignment: 08 Prove Part 2
 File:   prove_part_2.py
-Author: <Add name here>
+Author: Austin Linford
 
 Purpose: Part 2 of assignment 8, finding the path to the end of a maze using recursion.
 
@@ -21,11 +21,11 @@ position:
 
 What would be your strategy?
 
-<Answer here>
+I would track the path taken by each thread by storing the current path in the recursive function. When a thread finds an exit, it would save its path to a shared global variable before setting the stop flag to True, stopping all other threads
 
 Why would it work?
 
-<Answer here>
+Because each thread already explores diffrent paths independently, so it naturally tracks the correct path to the exit. When a thread finds the exit, it can simply save its path without interfering with other threads.
 
 """
 
@@ -80,12 +80,60 @@ def get_color():
 
 # TODO: Add any function(s) you need, if any, here.
 
+def explore(maze, row, col, color):
+    """Recursively explores the maze using threads."""
+    global stop
+    global thread_count
+
+    if stop:
+        return
+    
+    if maze.at_end(row, col):
+        maze.move(row, col, color)
+        stop = True
+        return
+    
+    if not maze.can_move_here(row, col):
+        return
+    
+    maze.move(row, col, color)
+    
+    moves = maze.get_possible_moves(row, col)
+    
+    if not moves:
+        return
+    
+    if len(moves) == 1:
+        r, c = moves[0]
+        explore(maze, r, c, color)
+        return
+    
+    first = True
+    for r, c in moves:
+        if first:
+            first = False
+            explore(maze, r, c, color)
+        else:
+            new_color = get_color()
+            thread_count += 1
+            t = threading.Thread(target=explore, args=(maze, r, c, new_color))
+            t.start()
 
 def solve_find_end(maze):
     """ Finds the end position using threads. Nothing is returned. """
     # When one of the threads finds the end position, stop all of them.
     global stop
+    global thread_count
+
     stop = False
+    thread_count = 1
+
+    start_row, start_col = maze.get_start_pos()
+    color = get_color()
+
+    t = threading.Thread(target=explore, args=(maze, start_row, start_col, color))
+    t.start()
+    t.join()
 
 
 

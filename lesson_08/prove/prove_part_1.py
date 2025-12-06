@@ -2,7 +2,7 @@
 Course: CSE 251 
 Assignment: 08 Prove Part 1
 File:   prove_part_1.py
-Author: <Add name here>
+Author: Austin Linford
 
 Purpose: Part 1 of assignment 8, finding the path to the end of a maze using recursion.
 
@@ -34,10 +34,27 @@ def solve_path(maze):
     """ Solve the maze and return the path found between the start and end positions.  
         The path is a list of positions, (x, y) """
     path = []
-    # TODO: Solve the maze recursively while tracking the correct path.
+    start_row, start_col = maze.get_start_pos()
 
-    # Hint: You can create an inner function to do the recursion
+    def dfs(row,col):
+        if maze.at_end(row,col):
+            path.append((col, row))
+            return True
 
+        if not maze.can_move_here(row, col):
+            return False
+        
+        maze.move(row, col, (0, 255, 0))  # Should mark as visited
+
+        for r, c in maze.get_possible_moves(row, col):
+            if dfs(r, c):
+                path.append((col, row))
+                return True
+        
+        maze.restore(row, col)  #Should Backtrack
+        return False
+    dfs(start_row, start_col)
+    path.reverse()
     return path
 
 
