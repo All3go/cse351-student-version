@@ -12,7 +12,7 @@ public class Assignment11
         if (n <= 3) return n > 1;
         if (n % 2 == 0 || n % 3 == 0) return false;
 
-        for (long i = 5; i * i <= n; i = i + 6)
+        for (long i = 5; i * i <= n; i += 6)
         {
             if (n % i == 0 || n % (i + 2) == 0)
                 return false;
@@ -22,31 +22,71 @@ public class Assignment11
 
     public static void Main(string[] args)
     {
-        // Use local variables for counting since we are in a single thread.
         int numbersProcessed = 0;
         int primeCount = 0;
 
         Console.WriteLine("Prime numbers found:");
 
-        var stopwatch = Stopwatch.StartNew();
-        
-        // A single for-loop to check every number sequentially.
+        Queue<long> queue = new Queue<long>();
         for (long i = START_NUMBER; i < START_NUMBER + RANGE_COUNT; i++)
         {
-            numbersProcessed++;
-            if (IsPrime(i))
+            queue.Enqueue(i);
+        }
+
+        object queueLock = new object();
+        object printLock = new object();
+        object countLock = new object();
+
+        var stopwatch = Stopwatch.StartNew();
+        
+        void Worker()
+        {
+            while (true)
             {
-                primeCount++;
-                Console.Write($"{i}, ");
+                long number;
+                lock (queueLock)
+                {
+                    if (queue.Count == 0)
+                        break;
+                    number = queue.Dequeue();
+                }
+
+                bool isPrime = IsPrime(number);
+
+                lock (countLock)
+                {
+                    numbersProcessed++;
+                    if (isPrime)
+                        primeCount++;
+                }
+
+                if (isPrime)
+                {
+                    lock (printLock)
+                    {
+                        Console.Write($"{number}, ");
+                    }
+                }
             }
+        }
+
+        Thread[] threads = new Thread[10];
+        for (int i = 0; i < threads.Length; i++)
+        {
+            threads[i] = new Thread(Worker);
+            threads[i].Start();
+        }
+
+        for (int i = 0; i < 10; i++)
+        {
+            threads[i].Join();
         }
 
         stopwatch.Stop();
 
-        Console.WriteLine(); // New line after all primes are printed
+        Console.WriteLine();
         Console.WriteLine();
 
-        // Should find 43427 primes for range_count = 1000000
         Console.WriteLine($"Numbers processed = {numbersProcessed}");
         Console.WriteLine($"Primes found      = {primeCount}");
         Console.WriteLine($"Total time        = {stopwatch.Elapsed}");        
